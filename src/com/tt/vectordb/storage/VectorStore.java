@@ -33,7 +33,15 @@ public class VectorStore {
         this.id = id;
         this.dimensions = dimensions;
         recordLength = Long.BYTES + dimensions * Float.BYTES;
-        File file = new File(Configuration.getConfiguration().get("data.directory", "data"), String.format("%d.bin", id));
+        File dir = new File(Configuration.getConfiguration().get("data.directory", "data"));
+        if (!dir.exists()) {
+            if (dir.mkdirs()) {
+                L.info(String.format("created data directory '%s'", dir.getAbsolutePath()));
+            } else {
+                throw new Exception(String.format("error creating data directory '%s'", dir.getAbsolutePath()));
+            }
+        }
+        File file = new File(dir, String.format("%d.bin", id));
         if (!file.exists()) {
             raf = new RandomAccessFile(file, "rw");
             maxSlots = Configuration.getConfiguration().get("data.max_vectors_per_index ", 65536);
@@ -97,9 +105,9 @@ public class VectorStore {
         raf.close();
         File file = new File(Configuration.getConfiguration().get("data.directory", "data"), String.format("%d.bin", id));
         if (file.delete()) {
-            L.info(String.format("deleted file '%s'", file.getAbsolutePath()));
+            L.info(String.format("deleted data file '%s'", file.getAbsolutePath()));
         } else {
-            L.error(String.format("error deleting file '%s'", file.getAbsolutePath()));
+            L.error(String.format("error deleting data file '%s'", file.getAbsolutePath()));
         }
     }
 
