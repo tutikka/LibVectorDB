@@ -11,6 +11,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+/**
+ * Class representing a singleton service to manage VectorDB indexes.
+ *
+ * @author Tuomas Tikka
+ */
 public class DBService {
 
     private static final Logger L = LoggerFactory.getLogger(DBService.class);
@@ -21,6 +26,9 @@ public class DBService {
 
     private static DBService service;
 
+    /**
+     * Constructor.
+     */
     private DBService() {
         try {
             indexStore = new IndexStore();
@@ -40,6 +48,11 @@ public class DBService {
         }
     }
 
+    /**
+     * Return the service instance of this class.
+     *
+     * @return The service instance
+     */
     public static DBService getService() {
         if (service == null) {
             service = new DBService();
@@ -47,6 +60,12 @@ public class DBService {
         return (service);
     }
 
+    /**
+     * Create a new index.
+     *
+     * @param index The index object
+     * @throws Exception If the index cannot be created
+     */
     public void createIndex(Index index) throws Exception {
         if (index == null) {
             throw new IllegalArgumentException("unrecognized request");
@@ -72,15 +91,21 @@ public class DBService {
     }
 
     /**
-     * Get index by identifier
+     * Get index by id
      *
-     * @param id The identifier
-     * @return The index or NULL if not found
+     * @param id The index id
+     * @return The index object or NULL if not found
      */
     public Index getIndex(long id) {
         return (indexStore.read(id));
     }
 
+    /**
+     * Get extra information for an index.
+     *
+     * @param id The index id
+     * @return The extra information as key/value pairs, or NULL if not found
+     */
     public Map<String, Object> getIndexExtras(long id) {
         VectorStore store = vectorStores.get(id);
         if (store != null) {
@@ -94,6 +119,12 @@ public class DBService {
         }
     }
 
+    /**
+     * Delete an index.
+     *
+     * @param id The index id
+     * @throws Exception If the index cannot be deleted
+     */
     public void deleteIndex(long id) throws Exception {
         indexStore.delete(id);
         try {
@@ -106,10 +137,22 @@ public class DBService {
         L.info(String.format("deleted index '%d'", id));
     }
 
+    /**
+     * Return a list of all indexes.
+     *
+     * @return The list of index objects
+     */
     public List<Index> listIndexes() {
         return (indexStore.list());
     }
 
+    /**
+     * Create an entry into an index.
+     *
+     * @param id The index id
+     * @param entry The entry object
+     * @throws Exception If the entry cannot be created
+     */
     public void createEntry(long id, Entry entry) throws Exception {
         Index index = getIndex(id);
         if (index == null) {
@@ -137,6 +180,15 @@ public class DBService {
         store.write(new VectorStoreItem(entry.getId(), entry.getEmbedding()));
     }
 
+    /**
+     * Return a list of all entries in an index.
+     *
+     * @param id The index id
+     * @param offset The offset
+     * @param limit The limit
+     * @return The list of entry objects
+     * @throws Exception If the entries cannot be listed
+     */
     public List<Entry> listEntries(long id, int offset, int limit) throws Exception {
         Index index = getIndex(id);
         if (index == null) {
@@ -168,6 +220,14 @@ public class DBService {
         return (entries);
     }
 
+    /**
+     * Search for entries in an index.
+     *
+     * @param id The index id
+     * @param search The search criteria object
+     * @return A search result object
+     * @throws Exception If the search cannot be performed
+     */
     public SearchResult searchEntries(long id, Search search) throws Exception {
         Index index = getIndex(id);
         if (index == null) {
@@ -224,6 +284,9 @@ public class DBService {
         return (result);
     }
 
+    /**
+     * Close the service instance.
+     */
     public void close() {
         for (VectorStore store : vectorStores.values()) {
             try {
